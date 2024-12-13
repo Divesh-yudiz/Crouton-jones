@@ -3,6 +3,8 @@ import { OrbitControls } from '@react-three/drei'
 import { City } from './models/City'
 import Light from './utils/Light'
 import { Environment } from '@react-three/drei'
+import environment from '../../assets/images/goegap_road_2k.hdr';
+// import { Physics } from '@react-three/rapier'
 
 export default function Scene() {
     return <>
@@ -21,8 +23,7 @@ export default function Scene() {
             <Light />
             <City />
             <Environment
-                files="src/assets/images/potsdamer_platz_1k.hdr"
-                // preset="studio"
+                files={environment}
                 background
             />
             <OrbitControls />
