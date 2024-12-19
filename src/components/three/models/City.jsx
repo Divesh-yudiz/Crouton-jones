@@ -9,13 +9,29 @@ import { Physics, RigidBody } from '@react-three/rapier'
 
 export function City(props) {
     const model = useGLTF(city)
-    console.log("model", model.scene.children[1].children)
+    const roads = model.scene.children[2].children
+    const buildings = model.scene.children[1].children
+    console.log("model", buildings)
+
     return (
-        <Physics debug>
-            <RigidBody type="fixed" colliders="hull">
-                <primitive object={model.scene} />
-            </RigidBody>
-        </Physics>
+        <>
+            {/* Regular city model without roads */}
+            <primitive object={model.scene} />
+
+            {/* Roads with RigidBody */}
+            {roads.map((road, index) => (
+                <RigidBody key={index} type="fixed" colliders="hull">
+                    <primitive object={road} />
+                </RigidBody>
+            ))}
+
+            {/* Buildings with RigidBody */}
+            {/* {buildings.map((building, index) => (
+                <RigidBody key={index} type="fixed" colliders="hull">
+                    <primitive object={building} />
+                </RigidBody>
+            ))} */}
+        </>
     )
 }
 
