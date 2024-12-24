@@ -1,82 +1,92 @@
-import React, { useRef } from 'react'
-import { RigidBody, useRapier } from '@react-three/rapier'
-import { useFrame } from '@react-three/fiber'
-import * as THREE from 'three'
+import React, { useRef, useEffect } from 'react'
+import { Physics, RigidBody } from '@react-three/rapier'
 import { useKeyboardControls } from '@react-three/drei'
+import { useFrame, useThree } from '@react-three/fiber'
+import * as THREE from 'three'
+import { useControls } from 'leva'
 
 function Player() {
-    const body = useRef()
-    const player = useRef()
     const [subscribeKeys, getKeys] = useKeyboardControls()
-    const { rapier, world } = useRapier()
+    const bodyRef = useRef()
+    const MOVEMENT_SPEED = 50
+    const { camera } = useThree()
+
+    const { cameraOffsetY, cameraOffsetZ, cameraTargetZ } = useControls('Camera', {
+        cameraOffsetY: {
+            value: 150,
+            min: 0,
+            max: 300,
+            step: 1,
+        },
+        cameraOffsetZ: {
+            value: 150,
+            min: 0,
+            max: 300,
+            step: 1,
+        },
+        cameraTargetZ: {
+            value: 0,
+            min: -200,
+            max: 200,
+            step: 1,
+        }
+    })
+
+    useEffect(() => {
+        const initialPosition = new THREE.Vector3(120, 560, 500)
+        const initialTarget = new THREE.Vector3(120, 60, 0)
+
+        camera.position.copy(initialPosition)
+        camera.lookAt(initialTarget)
+    }, [camera])
 
     useFrame((state, delta) => {
-        const { forward, backward, left, right, jump } = getKeys();
+        const { forward, backward, left, right, jump } = getKeys()
 
-        // Get current velocity
-        const rigidBody = world.getRigidBody(body.current)
-        const velocity = rigidBody.linvel();
+        console.log("keys", cameraOffsetY)
 
-        console.log("player", player)
+        if (!bodyRef.current) return
 
-        // Target velocity based on input
-        const targetVelocity = { x: 0, y: velocity.y, z: 0 }
-        const speed = 5; // Adjust this value for movement speed
+        const velocity = { x: 0, y: 0, z: 0 }
 
-        if (forward) targetVelocity.z -= speed;
-        if (backward) targetVelocity.z += speed;
-        if (left) targetVelocity.x -= speed;
-        if (right) targetVelocity.x += speed;
-        if (jump) targetVelocity.y += speed;
+        if (forward) velocity.z = -MOVEMENT_SPEED
+        if (backward) velocity.z = MOVEMENT_SPEED
+        if (left) velocity.x = -MOVEMENT_SPEED
+        if (right) velocity.x = MOVEMENT_SPEED
 
-        // Set the velocity
-        rigidBody.setLinvel({ x: targetVelocity.x, y: targetVelocity.y, z: targetVelocity.z }, true);
+        bodyRef.current.setLinvel({
+            x: velocity.x,
+            y: bodyRef.current.linvel().y,
+            z: velocity.z
+        })
 
-        // Get the current position of the player
-        const playerPosition = rigidBody.translation();
 
-        // Update the mesh position to match the rigid body position
-        if (player.current) {
-            player.current.position.set(0, 0, 0); // Reset local position
-            player.current.updateMatrixWorld();
-        }
+        // console.log("bodyRef.current", bodyRef.current)
+        const cameraPosition = new THREE.Vector3()
+        cameraPosition.copy(bodyRef.current.translation())
+        cameraPosition.y += 90;
+        cameraPosition.x += 120;
+        cameraPosition.z += 100;
 
-        // Calculate camera position relative to player
-        const cameraPosition = new THREE.Vector3();
-        cameraPosition.copy(playerPosition);
-        cameraPosition.y += 3; // Reduced height, now just above the player
-        cameraPosition.z += 0; // Camera directly above, no z-offset
+        const cameraTarget = new THREE.Vector3()
+        cameraTarget.copy(bodyRef.current.translation())
+        cameraTarget.x += 120;
+        cameraTarget.y += 70;
 
-        // Calculate camera target (looking at the player)
-        const cameraTarget = new THREE.Vector3();
-        cameraTarget.copy(playerPosition);
-
-        // Smooth camera movement
-        const smoothness = 5;
-        state.camera.position.lerp(cameraPosition, delta * smoothness);
-        // console.log("player position", playerPosition)
-        // console.log("cameraPosition", cameraPosition)
-
-        // Make the camera look straight down at the player
-        state.camera.lookAt(cameraTarget);
+        state.camera.position.lerp(cameraPosition, 0.01)
+        state.camera.lookAt(cameraTarget)
     })
 
     return (
         <RigidBody
-            ref={body}
+            ref={bodyRef}
             type="dynamic"
-            colliders="ball"
-            restitution={0.2}
-            friction={1}
-            linearDamping={2.5}
-            angularDamping={2.5}
-            mass={1}
-            // lockRotations={true}
-            position={[800, 50, 0]}
+            colliders="hull"
+            lockRotations={true}
         >
-            <mesh ref={player}>
-                <icosahedronGeometry />
-                <meshStandardMaterial />
+            <mesh position={[120, 60, 0]}>
+                <capsuleGeometry args={[5, 5, 5]} />
+                <meshStandardMaterial color="red" />
             </mesh>
         </RigidBody>
     )
@@ -87,17 +97,20 @@ export default Player
 
 
 
-// Calculate camera position relative to player
+
+
+
+// // console.log("bodyRef.current", bodyRef.current)
 // const cameraPosition = new THREE.Vector3()
-// cameraPosition.copy(playerPosition)
-// cameraPosition.z += 10
-// cameraPosition.y += 5
+// cameraPosition.copy(bodyRef.current.translation())
+// cameraPosition.y += 90;
+// cameraPosition.x += 120;
+// cameraPosition.z += 100;
 
-// // Calculate camera target (looking slightly above the player)
 // const cameraTarget = new THREE.Vector3()
-// cameraTarget.copy(playerPosition)
-// cameraTarget.y += 0.25
+// cameraTarget.copy(bodyRef.current.translation())
+// cameraTarget.x += 120;
+// cameraTarget.y += 70;
 
-// // Update camera
 // state.camera.position.copy(cameraPosition)
 // state.camera.lookAt(cameraTarget)

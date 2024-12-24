@@ -1,11 +1,14 @@
 import { Canvas, useFrame } from '@react-three/fiber'
-import { OrbitControls, Environment, KeyboardControls } from '@react-three/drei'
+import { Environment, KeyboardControls, OrbitControls } from '@react-three/drei'
+import { useRef } from 'react'
 import { City } from './models/City'
 import Light from './utils/Light'
 import environment from '../../assets/images/goegap_road_2k.hdr';
 import { Physics } from '@react-three/rapier'
 import Player from './models/Player'
 export default function Scene() {
+
+    const cameraRef = useRef()
     return <>
         <KeyboardControls
             map={[
@@ -25,19 +28,20 @@ export default function Scene() {
                     fov: 25,
                     near: 0.1,
                     far: 10000,
-                    position: [0, 500, 1200]
+                    position: [0, 500, 1200],
                 }}
+                ref={cameraRef}
             >
+                <OrbitControls />
                 <Light />
-                <Physics debug>
+                <Physics gravity={[0, -9.81, 0]} debug>
                     <City />
-                    <Player />
+                    <Player cameraRef={cameraRef} />
                 </Physics>
                 <Environment
                     files={environment}
                     background
                 />
-                <OrbitControls />
             </Canvas>
         </KeyboardControls>
     </>

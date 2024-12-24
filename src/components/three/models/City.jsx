@@ -11,26 +11,20 @@ export function City(props) {
     const model = useGLTF(city)
     const roads = model.scene.children[2].children
     const buildings = model.scene.children[1].children
-    console.log("model", buildings)
+    const ground = model.nodes.Plane001;
+    // console.log("model", model.nodes.Plane001)
 
     return (
         <>
             {/* Regular city model without roads */}
             <primitive object={model.scene} />
-
             {/* Roads with RigidBody */}
             {roads.map((road, index) => (
                 <RigidBody key={index} type="fixed" colliders="hull">
                     <primitive object={road} />
+                    <primitive object={ground} />
                 </RigidBody>
             ))}
-
-            {/* Buildings with RigidBody */}
-            {/* {buildings.map((building, index) => (
-                <RigidBody key={index} type="fixed" colliders="hull">
-                    <primitive object={building} />
-                </RigidBody>
-            ))} */}
         </>
     )
 }
